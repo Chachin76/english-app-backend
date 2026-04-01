@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-os.environ ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY", "")
+os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY", "")
 cliente = Anthropic()
 
 app = FastAPI()
@@ -18,82 +18,152 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+IDIOMAS = {
+    "ingles":    {"nombre": "inglés",    "en": "English",    "profesor": "an English teacher"},
+    "frances":   {"nombre": "francés",   "en": "French",     "profesor": "a French teacher"},
+    "portugues": {"nombre": "portugués", "en": "Portuguese", "profesor": "a Portuguese teacher"},
+    "italiano":  {"nombre": "italiano",  "en": "Italian",    "profesor": "an Italian teacher"},
+    "aleman":    {"nombre": "alemán",    "en": "German",     "profesor": "a German teacher"},
+    "espanol":   {"nombre": "español",   "en": "Spanish",    "profesor": "a Spanish teacher"},
+    "chino":     {"nombre": "chino",     "en": "Chinese (Mandarin)", "profesor": "a Mandarin Chinese teacher"},
+    "japones":   {"nombre": "japonés",   "en": "Japanese",   "profesor": "a Japanese teacher"},
+}
+
+def get_idioma(idioma: str):
+    return IDIOMAS.get(idioma, IDIOMAS["ingles"])
+
 class MensajeCorrector(BaseModel):
     texto: str
+    idioma: str = "ingles"
 
 class MensajeChat(BaseModel):
     historial: list
     system: str = ""
+    idioma: str = "ingles"
+
+class MensajeGramatica(BaseModel):
+    estructura: str
+    idioma: str = "ingles"
+
+class MensajeDiagnostico(BaseModel):
+    respuestas: list
+    idioma: str = "ingles"
+
+class MensajeVocabulario(BaseModel):
+    nivel: str
+    palabras_vistas: list = []
+    idioma: str = "ingles"
+
+class MensajeSituacion(BaseModel):
+    situacion: str
+    historial: list
+    nivel: str = "B1"
+    idioma: str = "ingles"
+
+class MensajeResumen(BaseModel):
+    situacion: str
+    historial: list
+    nivel: str = "B1"
+    idioma: str = "ingles"
+
+class MensajeDictado(BaseModel):
+    nivel: str = "B1"
+    cantidad: int = 5
+    idioma: str = "ingles"
+
+class MensajeCorreccionDictado(BaseModel):
+    original: str
+    escrito: str
+    idioma: str = "ingles"
+
+class MensajeLectura(BaseModel):
+    nivel: str = "B1"
+    tema: str = ""
+    idioma: str = "ingles"
+
+class MensajeCultura(BaseModel):
+    categoria: str = "expresiones"
+    nivel: str = "B1"
+    idioma: str = "ingles"
+
+class MensajeEjercicios(BaseModel):
+    tipo: str = "completar"
+    nivel: str = "B1"
+    idioma: str = "ingles"
 
 @app.get("/")
 def inicio():
-    return {"mensaje": "Servidor English App funcionando"}
+    return {"mensaje": "Servidor Language Learning App funcionando"}
 
 @app.post("/corregir")
 def corregir(datos: MensajeCorrector):
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": "INSTRUCCION: Responde UNICAMENTE en español. Sos un profesor de ingles. Analiza esta oracion: NIVEL: [Correcto/Errores menores/Errores importantes] ERRORES: [lista] CORRECCION: [corregida] EXPLICACION: [en español] CONSEJO: [corto]. Oracion: " + datos.texto
+            "content": f"""You are {id['profesor']} for Spanish speakers from Argentina.
+Analyze this sentence written in {id['en']} and respond ONLY in Spanish.
+
+Format:
+NIVEL: [Correcto/Errores menores/Errores importantes]
+ERRORES: [list of errors in Spanish]
+CORRECCION: [corrected sentence in {id['en']}]
+EXPLICACION: [explanation in Spanish]
+CONSEJO: [short tip in Spanish]
+
+Sentence: {datos.texto}"""
         }]
     )
     return {"respuesta": respuesta.content[0].text}
 
 @app.post("/chat")
 def chat(datos: MensajeChat):
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system="Sos un tutor de ingles amigable. Responde en ingles. Corrige errores al final en español entre parentesis. Se breve y alentador.",
+        system=f"You are a friendly {id['en']} tutor. Respond in {id['en']}. Correct errors at the end in Spanish between parentheses. Be brief and encouraging.",
         messages=datos.historial
     )
     return {"respuesta": respuesta.content[0].text}
-class MensajeGramatica(BaseModel):
-    estructura: str
 
 @app.post("/gramatica")
 def gramatica(datos: MensajeGramatica):
+    import json
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de inglés para hispanohablantes argentinos.
-Para la estructura gramatical "{datos.estructura}" generá exactamente 3 ejemplos.
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Para la estructura gramatical "{datos.estructura}" en {id['en']}, generá exactamente 3 ejemplos.
 
 Respondé ÚNICAMENTE con este formato JSON, sin texto extra:
 {{
   "significado": "explicación en español de cuándo y cómo se usa esta estructura",
   "ejemplos": [
     {{
-      "ingles": "la oración en inglés",
+      "ingles": "la oración en {id['en']}",
       "español": "la traducción al español argentino",
-      "fonetica": "pronunciación simplificada en español, por ejemplo: du yu hæv...",
+      "fonetica": "pronunciación simplificada en español",
       "explicacion": "explicación gramatical breve en español"
     }}
   ]
 }}"""
         }]
     )
-    import json
-    texto = respuesta.content[0].text
-    texto_limpio = texto.strip()
-    if texto_limpio.startswith("```"):
-        texto_limpio = texto_limpio.split("\n", 1)[1]
-        texto_limpio = texto_limpio.rsplit("```", 1)[0]
-    return json.loads(texto_limpio)
-class MensajeDiagnostico(BaseModel):
-    respuestas: list
-
-class MensajeNivel(BaseModel):
-    nivel: str
-    tema: str = ""
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
 
 @app.post("/diagnostico")
 def diagnostico(datos: MensajeDiagnostico):
     import json
+    id = get_idioma(datos.idioma)
     texto_respuestas = "\n".join([
         f"Pregunta {i+1}: {r['pregunta']} → Respuesta del estudiante: {r['respuesta']}"
         for i, r in enumerate(datos.respuestas)
@@ -103,17 +173,17 @@ def diagnostico(datos: MensajeDiagnostico):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Sos un evaluador de ingles. Analiza estas respuestas y determina el nivel MCER del estudiante.
+            "content": f"""Sos un evaluador de {id['nombre']}. Analiza estas respuestas y determiná el nivel MCER.
 
 {texto_respuestas}
 
-Responde UNICAMENTE con este JSON sin texto extra:
+Respondé ÚNICAMENTE con este JSON sin texto extra:
 {{
   "nivel": "A1/A2/B1/B2/C1",
   "puntos_fuertes": ["punto 1", "punto 2"],
   "puntos_debiles": ["punto 1", "punto 2"],
-  "descripcion": "descripcion del nivel en espanol de 2 oraciones",
-  "recomendacion": "que deberia practicar primero, en espanol"
+  "descripcion": "descripción del nivel en español de 2 oraciones",
+  "recomendacion": "qué debería practicar primero, en español"
 }}"""
         }]
     )
@@ -121,31 +191,29 @@ Responde UNICAMENTE con este JSON sin texto extra:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeVocabulario(BaseModel):
-    nivel: str
-    palabras_vistas: list = []
 
 @app.post("/vocabulario")
 def vocabulario(datos: MensajeVocabulario):
     import json
+    id = get_idioma(datos.idioma)
     palabras_excluir = ", ".join(datos.palabras_vistas) if datos.palabras_vistas else "ninguna"
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de ingles. Genera 10 palabras de vocabulario para nivel {datos.nivel}.
-NO incluyas estas palabras que el estudiante ya vio: {palabras_excluir}
+            "content": f"""Sos un profesor de {id['nombre']}. Generá 10 palabras de vocabulario en {id['en']} para nivel {datos.nivel}.
+NO incluyas estas palabras: {palabras_excluir}
 
-Responde UNICAMENTE con este JSON sin texto extra:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "palabras": [
     {{
-      "ingles": "la palabra en ingles",
-      "español": "traduccion al espanol argentino",
+      "ingles": "la palabra en {id['en']}",
+      "español": "traducción al español argentino",
       "categoria": "sustantivo/verbo/adjetivo/adverbio",
-      "ejemplo": "oracion de ejemplo en ingles",
-      "ejemplo_español": "traduccion del ejemplo",
+      "ejemplo": "oración de ejemplo en {id['en']}",
+      "ejemplo_español": "traducción del ejemplo",
       "nivel": "{datos.nivel}"
     }}
   ]
@@ -156,39 +224,32 @@ Responde UNICAMENTE con este JSON sin texto extra:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeSituacion(BaseModel):
-    situacion: str
-    historial: list
-    nivel: str = "B1"
 
 @app.post("/situacion")
 def situacion(datos: MensajeSituacion):
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=f"""Sos un actor que interpreta situaciones de la vida real para que un estudiante de ingles nivel {datos.nivel} practique conversacion.
+        system=f"""You are an actor playing real-life situations so a {id['en']} student at level {datos.nivel} can practice conversation.
 
-Situacion actual: {datos.situacion}
+Current situation: {datos.situacion}
 
-Reglas:
-1. Responde SIEMPRE en ingles, en el rol asignado
-2. Usa vocabulario apropiado para nivel {datos.nivel}
-3. Si el estudiante comete errores gramaticales, al final de tu respuesta agrega entre parentesis: (Correccion: como deberia decirse, en espanol)
-4. Mantene la escena realista y fluida
-5. Hace preguntas para avanzar la conversacion
-6. Mensajes cortos, maximo 3 oraciones""",
+Rules:
+1. Always respond in {id['en']}
+2. Use vocabulary appropriate for level {datos.nivel}
+3. If the student makes grammatical errors, add at the end: (Corrección: cómo debería decirse, en español)
+4. Keep the scene realistic
+5. Ask questions to move the conversation forward
+6. Short messages, maximum 3 sentences""",
         messages=datos.historial
     )
     return {"respuesta": respuesta.content[0].text}
 
-class MensajeResumen(BaseModel):
-    situacion: str
-    historial: list
-    nivel: str = "B1"
-
 @app.post("/resumen-situacion")
 def resumen_situacion(datos: MensajeResumen):
     import json
+    id = get_idioma(datos.idioma)
     conversacion = "\n".join([
         f"{'Estudiante' if m['role'] == 'user' else 'Tutor'}: {m['content']}"
         for m in datos.historial
@@ -198,21 +259,20 @@ def resumen_situacion(datos: MensajeResumen):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Analiza esta conversacion de practica de ingles y da un resumen del desempeno del estudiante.
+            "content": f"""Analizá esta conversación de práctica de {id['nombre']} y dá un resumen del desempeño.
 
-Situacion: {datos.situacion}
-Nivel del estudiante: {datos.nivel}
-
-Conversacion:
+Situación: {datos.situacion}
+Nivel: {datos.nivel}
+Conversación:
 {conversacion}
 
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "puntaje": 85,
-  "resumen": "descripcion breve del desempeno en espanol",
+  "resumen": "descripción breve en español",
   "errores_frecuentes": ["error 1", "error 2"],
-  "frases_utiles": ["frase util 1", "frase util 2"],
-  "consejo": "consejo principal para mejorar en espanol"
+  "frases_utiles": ["frase útil 1", "frase útil 2"],
+  "consejo": "consejo principal en español"
 }}"""
         }]
     )
@@ -220,35 +280,24 @@ Responde UNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeDictado(BaseModel):
-    nivel: str = "B1"
-    cantidad: int = 5
-
-class MensajeCorreccionDictado(BaseModel):
-    original: str
-    escrito: str
 
 @app.post("/dictado/frases")
 def dictado_frases(datos: MensajeDictado):
     import json
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Genera {datos.cantidad} frases en ingles para un ejercicio de dictado, nivel {datos.nivel}.
+            "content": f"""Generá {datos.cantidad} frases en {id['en']} para un ejercicio de dictado, nivel {datos.nivel}.
 
-Las frases deben:
-- Ser naturales y variadas en tema
-- Tener longitud apropiada para el nivel ({datos.nivel})
-- Incluir vocabulario comun del nivel
-
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "frases": [
     {{
-      "texto": "la frase en ingles",
-      "traduccion": "traduccion al espanol argentino"
+      "texto": "la frase en {id['en']}",
+      "traduccion": "traducción al español argentino"
     }}
   ]
 }}"""
@@ -262,28 +311,29 @@ Responde UNICAMENTE con este JSON:
 @app.post("/dictado/corregir")
 def corregir_dictado(datos: MensajeCorreccionDictado):
     import json
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Compara estas dos frases y analiza los errores del dictado.
+            "content": f"""Comparar estas dos frases en {id['en']} y analizar los errores del dictado.
 
 Frase original: "{datos.original}"
-Lo que escribio el estudiante: "{datos.escrito}"
+Lo que escribió el estudiante: "{datos.escrito}"
 
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "puntaje": 85,
   "palabras": [
     {{
       "palabra": "cada palabra del original",
       "estado": "correcta/incorrecta/faltante",
-      "escrita": "lo que escribio el estudiante para esa palabra"
+      "escrita": "lo que escribió el estudiante"
     }}
   ],
-  "errores": ["descripcion de cada error en espanol"],
-  "consejo": "consejo breve en espanol"
+  "errores": ["descripción de cada error en español"],
+  "consejo": "consejo breve en español"
 }}"""
         }]
     )
@@ -291,46 +341,33 @@ Responde UNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeLectura(BaseModel):
-    nivel: str = "B1"
-    tema: str = ""
-
-class MensajeRespuestaLectura(BaseModel):
-    texto: str
-    pregunta: str
-    respuesta: str
-    nivel: str = "B1"
 
 @app.post("/lectura/generar")
 def generar_lectura(datos: MensajeLectura):
     import json
+    id = get_idioma(datos.idioma)
     tema_instruccion = f"sobre el tema: {datos.tema}" if datos.tema else "sobre un tema interesante y variado"
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Genera un texto en ingles para lectura graduada, nivel {datos.nivel}, {tema_instruccion}.
+            "content": f"""Generá un texto en {id['en']} para lectura graduada, nivel {datos.nivel}, {tema_instruccion}.
 
-El texto debe:
-- Tener longitud apropiada para el nivel ({datos.nivel}): A1/A2=100 palabras, B1/B2=200 palabras, C1=300 palabras
-- Usar vocabulario y estructuras apropiadas para el nivel
-- Ser interesante y real, no artificial
-- Tener un titulo
+Longitud: A1/A2=100 palabras, B1/B2=200 palabras, C1=300 palabras.
+Luego generá 4 preguntas de comprensión con 4 opciones cada una.
 
-Luego genera 4 preguntas de comprension con 4 opciones cada una.
-
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
-  "titulo": "titulo del texto",
-  "texto": "el texto completo en ingles",
+  "titulo": "título del texto",
+  "texto": "el texto completo en {id['en']}",
   "palabras_clave": ["palabra1", "palabra2", "palabra3", "palabra4", "palabra5"],
   "preguntas": [
     {{
-      "pregunta": "la pregunta en ingles",
-      "opciones": ["opcion A", "opcion B", "opcion C", "opcion D"],
-      "correcta": "opcion A",
-      "explicacion": "por que es correcta, en espanol"
+      "pregunta": "la pregunta en {id['en']}",
+      "opciones": ["opción A", "opción B", "opción C", "opción D"],
+      "correcta": "opción A",
+      "explicacion": "por qué es correcta, en español"
     }}
   ]
 }}"""
@@ -340,32 +377,29 @@ Responde UNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeCultura(BaseModel):
-    categoria: str = "expresiones"
-    nivel: str = "B1"
 
 @app.post("/cultura")
 def cultura(datos: MensajeCultura):
     import json
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de ingles y cultura anglofona. 
-Genera 5 elementos de la categoria "{datos.categoria}" para nivel {datos.nivel}.
+            "content": f"""Sos un profesor de {id['nombre']} y cultura. Generá 5 elementos de la categoría "{datos.categoria}" para nivel {datos.nivel}.
 
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "items": [
     {{
-      "expresion": "la expresion o elemento cultural en ingles",
+      "expresion": "la expresión en {id['en']}",
       "tipo": "modismo/phrasal verb/slang/diferencia cultural/referencia",
-      "significado": "que significa en espanol argentino",
-      "origen": "de donde viene o por que se dice (breve, en espanol)",
-      "ejemplo_us": "ejemplo de uso en ingles americano",
-      "ejemplo_uk": "como se dice o usa en ingles britanico (si aplica, sino igual)",
-      "ejemplo_español": "traduccion del ejemplo",
+      "significado": "qué significa en español argentino",
+      "origen": "de dónde viene, en español",
+      "ejemplo_us": "ejemplo de uso en {id['en']}",
+      "ejemplo_uk": "variante si aplica",
+      "ejemplo_español": "traducción del ejemplo",
       "nivel_dificultad": "facil/medio/dificil"
     }}
   ]
@@ -376,30 +410,28 @@ Responde UNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
-class MensajeEjercicios(BaseModel):
-    tipo: str = "completar"
-    nivel: str = "B1"
 
 @app.post("/ejercicios")
 def ejercicios(datos: MensajeEjercicios):
     import json
+    id = get_idioma(datos.idioma)
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de ingles. Genera 5 ejercicios de tipo "{datos.tipo}" para nivel {datos.nivel}.
+            "content": f"""Sos un profesor de {id['nombre']}. Generá 5 ejercicios de tipo "{datos.tipo}" para nivel {datos.nivel}.
 
-Responde UNICAMENTE con este JSON:
+Respondé ÚNICAMENTE con este JSON:
 {{
   "tipo": "{datos.tipo}",
   "ejercicios": [
     {{
-      "instruccion": "instruccion breve en espanol",
-      "enunciado": "el ejercicio en ingles con ___ donde va la respuesta",
+      "instruccion": "instrucción breve en español",
+      "enunciado": "el ejercicio en {id['en']} con ___ donde va la respuesta",
       "respuesta": "la respuesta correcta",
-      "explicacion": "por que es correcta, en espanol",
-      "pista": "una pista breve en espanol"
+      "explicacion": "por qué es correcta, en español",
+      "pista": "una pista breve en español"
     }}
   ]
 }}"""
@@ -408,4 +440,4 @@ Responde UNICAMENTE con este JSON:
     texto = respuesta.content[0].text.strip()
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
-    return json.loads(texto)    
+    return json.loads(texto)
