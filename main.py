@@ -441,3 +441,32 @@ Respondé ÚNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
+class MensajeFrases(BaseModel):
+    idioma: str = "ingles"
+
+@app.post("/frases")
+def frases(datos: MensajeFrases):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Generá 7 frases célebres o proverbios en {id['en']} con su traducción al español argentino.
+
+Respondé ÚNICAMENTE con este JSON:
+{{
+  "frases": [
+    {{
+      "idioma": "la frase en {id['en']}",
+      "español": "traducción al español argentino"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
