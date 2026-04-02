@@ -470,3 +470,37 @@ Respondé ÚNICAMENTE con este JSON:
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
+class MensajePreguntasDiagnostico(BaseModel):
+    idioma: str = "ingles"
+
+@app.post("/diagnostico/preguntas")
+def preguntas_diagnostico(datos: MensajePreguntasDiagnostico):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Generá 10 preguntas de opción múltiple para evaluar el nivel MCER de {id['en']} de un estudiante hispanohablante argentino.
+
+2 preguntas nivel A1, 2 nivel A2, 2 nivel B1, 2 nivel B2, 2 nivel C1.
+
+Respondé ÚNICAMENTE con este JSON:
+{{
+  "preguntas": [
+    {{
+      "id": 1,
+      "nivel": "A1",
+      "pregunta": "la pregunta en español sobre {id['en']}",
+      "opciones": ["opción A", "opción B", "opción C", "opción D"],
+      "correcta": "opción A"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
