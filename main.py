@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from anthropic import Anthropic
@@ -19,14 +19,15 @@ app.add_middleware(
 )
 
 IDIOMAS = {
-    "ingles":    {"nombre": "inglés",    "en": "English",    "profesor": "an English teacher"},
-    "frances":   {"nombre": "francés",   "en": "French",     "profesor": "a French teacher"},
-    "portugues": {"nombre": "portugués", "en": "Portuguese", "profesor": "a Portuguese teacher"},
+    "ingles":    {"nombre": "inglÃ©s",    "en": "English",    "profesor": "an English teacher"},
+    "frances":   {"nombre": "francÃ©s",   "en": "French",     "profesor": "a French teacher"},
+    "portugues": {"nombre": "portuguÃ©s", "en": "Portuguese", "profesor": "a Portuguese teacher"},
     "italiano":  {"nombre": "italiano",  "en": "Italian",    "profesor": "an Italian teacher"},
-    "aleman":    {"nombre": "alemán",    "en": "German",     "profesor": "a German teacher"},
-    "espanol":   {"nombre": "español",   "en": "Spanish",    "profesor": "a Spanish teacher"},
+    "aleman":    {"nombre": "alemÃ¡n",    "en": "German",     "profesor": "a German teacher"},
+    "espanol":   {"nombre": "espaÃ±ol",   "en": "Spanish",    "profesor": "a Spanish teacher"},
     "chino":     {"nombre": "chino",     "en": "Chinese (Mandarin)", "profesor": "a Mandarin Chinese teacher"},
-    "japones":   {"nombre": "japonés",   "en": "Japanese",   "profesor": "a Japanese teacher"},
+    "japones":   {"nombre": "japones",   "en": "Japanese",   "profesor": "a Japanese teacher"},
+    "coreano":   {"nombre": "coreano",   "en": "Korean",     "profesor": "a Korean teacher"},
 }
 
 def get_idioma(idioma: str):
@@ -139,17 +140,17 @@ def gramatica(datos: MensajeGramatica):
         messages=[{
             "role": "user",
             "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
-Para la estructura gramatical "{datos.estructura}" en {id['en']}, generá exactamente 3 ejemplos.
+Para la estructura gramatical "{datos.estructura}" en {id['en']}, generÃ¡ exactamente 3 ejemplos.
 
-Respondé ÚNICAMENTE con este formato JSON, sin texto extra:
+RespondÃ© ÃšNICAMENTE con este formato JSON, sin texto extra:
 {{
-  "significado": "explicación en español de cuándo y cómo se usa esta estructura",
+  "significado": "explicaciÃ³n en espaÃ±ol de cuÃ¡ndo y cÃ³mo se usa esta estructura",
   "ejemplos": [
     {{
-      "ingles": "la oración en {id['en']}",
-      "español": "la traducción al español argentino",
-      "fonetica": "pronunciación simplificada en español",
-      "explicacion": "explicación gramatical breve en español"
+      "ingles": "la oraciÃ³n en {id['en']}",
+      "espaÃ±ol": "la traducciÃ³n al espaÃ±ol argentino",
+      "fonetica": "pronunciaciÃ³n simplificada en espaÃ±ol",
+      "explicacion": "explicaciÃ³n gramatical breve en espaÃ±ol"
     }}
   ]
 }}"""
@@ -165,7 +166,7 @@ def diagnostico(datos: MensajeDiagnostico):
     import json
     id = get_idioma(datos.idioma)
     texto_respuestas = "\n".join([
-        f"Pregunta {i+1}: {r['pregunta']} → Respuesta del estudiante: {r['respuesta']}"
+        f"Pregunta {i+1}: {r['pregunta']} â†’ Respuesta del estudiante: {r['respuesta']}"
         for i, r in enumerate(datos.respuestas)
     ])
     respuesta = cliente.messages.create(
@@ -173,17 +174,17 @@ def diagnostico(datos: MensajeDiagnostico):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Sos un evaluador de {id['nombre']}. Analiza estas respuestas y determiná el nivel MCER.
+            "content": f"""Sos un evaluador de {id['nombre']}. Analiza estas respuestas y determinÃ¡ el nivel MCER.
 
 {texto_respuestas}
 
-Respondé ÚNICAMENTE con este JSON sin texto extra:
+RespondÃ© ÃšNICAMENTE con este JSON sin texto extra:
 {{
   "nivel": "A1/A2/B1/B2/C1",
   "puntos_fuertes": ["punto 1", "punto 2"],
   "puntos_debiles": ["punto 1", "punto 2"],
-  "descripcion": "descripción del nivel en español de 2 oraciones",
-  "recomendacion": "qué debería practicar primero, en español"
+  "descripcion": "descripciÃ³n del nivel en espaÃ±ol de 2 oraciones",
+  "recomendacion": "quÃ© deberÃ­a practicar primero, en espaÃ±ol"
 }}"""
         }]
     )
@@ -202,18 +203,18 @@ def vocabulario(datos: MensajeVocabulario):
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de {id['nombre']}. Generá 10 palabras de vocabulario en {id['en']} para nivel {datos.nivel}.
+            "content": f"""Sos un profesor de {id['nombre']}. GenerÃ¡ 10 palabras de vocabulario en {id['en']} para nivel {datos.nivel}.
 NO incluyas estas palabras: {palabras_excluir}
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "palabras": [
     {{
       "ingles": "la palabra en {id['en']}",
-      "español": "traducción al español argentino",
+      "espaÃ±ol": "traducciÃ³n al espaÃ±ol argentino",
       "categoria": "sustantivo/verbo/adjetivo/adverbio",
-      "ejemplo": "oración de ejemplo en {id['en']}",
-      "ejemplo_español": "traducción del ejemplo",
+      "ejemplo": "oraciÃ³n de ejemplo en {id['en']}",
+      "ejemplo_espaÃ±ol": "traducciÃ³n del ejemplo",
       "nivel": "{datos.nivel}"
     }}
   ]
@@ -238,7 +239,7 @@ Current situation: {datos.situacion}
 Rules:
 1. Always respond in {id['en']}
 2. Use vocabulary appropriate for level {datos.nivel}
-3. If the student makes grammatical errors, add at the end: (Corrección: cómo debería decirse, en español)
+3. If the student makes grammatical errors, add at the end: (CorrecciÃ³n: cÃ³mo deberÃ­a decirse, en espaÃ±ol)
 4. Keep the scene realistic
 5. Ask questions to move the conversation forward
 6. Short messages, maximum 3 sentences""",
@@ -259,20 +260,20 @@ def resumen_situacion(datos: MensajeResumen):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Analizá esta conversación de práctica de {id['nombre']} y dá un resumen del desempeño.
+            "content": f"""AnalizÃ¡ esta conversaciÃ³n de prÃ¡ctica de {id['nombre']} y dÃ¡ un resumen del desempeÃ±o.
 
-Situación: {datos.situacion}
+SituaciÃ³n: {datos.situacion}
 Nivel: {datos.nivel}
-Conversación:
+ConversaciÃ³n:
 {conversacion}
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "puntaje": 85,
-  "resumen": "descripción breve en español",
+  "resumen": "descripciÃ³n breve en espaÃ±ol",
   "errores_frecuentes": ["error 1", "error 2"],
-  "frases_utiles": ["frase útil 1", "frase útil 2"],
-  "consejo": "consejo principal en español"
+  "frases_utiles": ["frase Ãºtil 1", "frase Ãºtil 2"],
+  "consejo": "consejo principal en espaÃ±ol"
 }}"""
         }]
     )
@@ -290,14 +291,14 @@ def dictado_frases(datos: MensajeDictado):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Generá {datos.cantidad} frases en {id['en']} para un ejercicio de dictado, nivel {datos.nivel}.
+            "content": f"""GenerÃ¡ {datos.cantidad} frases en {id['en']} para un ejercicio de dictado, nivel {datos.nivel}.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "frases": [
     {{
       "texto": "la frase en {id['en']}",
-      "traduccion": "traducción al español argentino"
+      "traduccion": "traducciÃ³n al espaÃ±ol argentino"
     }}
   ]
 }}"""
@@ -320,20 +321,20 @@ def corregir_dictado(datos: MensajeCorreccionDictado):
             "content": f"""Comparar estas dos frases en {id['en']} y analizar los errores del dictado.
 
 Frase original: "{datos.original}"
-Lo que escribió el estudiante: "{datos.escrito}"
+Lo que escribiÃ³ el estudiante: "{datos.escrito}"
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "puntaje": 85,
   "palabras": [
     {{
       "palabra": "cada palabra del original",
       "estado": "correcta/incorrecta/faltante",
-      "escrita": "lo que escribió el estudiante"
+      "escrita": "lo que escribiÃ³ el estudiante"
     }}
   ],
-  "errores": ["descripción de cada error en español"],
-  "consejo": "consejo breve en español"
+  "errores": ["descripciÃ³n de cada error en espaÃ±ol"],
+  "consejo": "consejo breve en espaÃ±ol"
 }}"""
         }]
     )
@@ -352,22 +353,22 @@ def generar_lectura(datos: MensajeLectura):
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Generá un texto en {id['en']} para lectura graduada, nivel {datos.nivel}, {tema_instruccion}.
+            "content": f"""GenerÃ¡ un texto en {id['en']} para lectura graduada, nivel {datos.nivel}, {tema_instruccion}.
 
 Longitud: A1/A2=100 palabras, B1/B2=200 palabras, C1=300 palabras.
-Luego generá 4 preguntas de comprensión con 4 opciones cada una.
+Luego generÃ¡ 4 preguntas de comprensiÃ³n con 4 opciones cada una.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
-  "titulo": "título del texto",
+  "titulo": "tÃ­tulo del texto",
   "texto": "el texto completo en {id['en']}",
   "palabras_clave": ["palabra1", "palabra2", "palabra3", "palabra4", "palabra5"],
   "preguntas": [
     {{
       "pregunta": "la pregunta en {id['en']}",
-      "opciones": ["opción A", "opción B", "opción C", "opción D"],
-      "correcta": "opción A",
-      "explicacion": "por qué es correcta, en español"
+      "opciones": ["opciÃ³n A", "opciÃ³n B", "opciÃ³n C", "opciÃ³n D"],
+      "correcta": "opciÃ³n A",
+      "explicacion": "por quÃ© es correcta, en espaÃ±ol"
     }}
   ]
 }}"""
@@ -387,19 +388,19 @@ def cultura(datos: MensajeCultura):
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de {id['nombre']} y cultura. Generá 5 elementos de la categoría "{datos.categoria}" para nivel {datos.nivel}.
+            "content": f"""Sos un profesor de {id['nombre']} y cultura. GenerÃ¡ 5 elementos de la categorÃ­a "{datos.categoria}" para nivel {datos.nivel}.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "items": [
     {{
-      "expresion": "la expresión en {id['en']}",
+      "expresion": "la expresiÃ³n en {id['en']}",
       "tipo": "modismo/phrasal verb/slang/diferencia cultural/referencia",
-      "significado": "qué significa en español argentino",
-      "origen": "de dónde viene, en español",
+      "significado": "quÃ© significa en espaÃ±ol argentino",
+      "origen": "de dÃ³nde viene, en espaÃ±ol",
       "ejemplo_us": "ejemplo de uso en {id['en']}",
       "ejemplo_uk": "variante si aplica",
-      "ejemplo_español": "traducción del ejemplo",
+      "ejemplo_espaÃ±ol": "traducciÃ³n del ejemplo",
       "nivel_dificultad": "facil/medio/dificil"
     }}
   ]
@@ -420,18 +421,18 @@ def ejercicios(datos: MensajeEjercicios):
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Sos un profesor de {id['nombre']}. Generá 5 ejercicios de tipo "{datos.tipo}" para nivel {datos.nivel}.
+            "content": f"""Sos un profesor de {id['nombre']}. GenerÃ¡ 5 ejercicios de tipo "{datos.tipo}" para nivel {datos.nivel}.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "tipo": "{datos.tipo}",
   "ejercicios": [
     {{
-      "instruccion": "instrucción breve en español",
+      "instruccion": "instrucciÃ³n breve en espaÃ±ol",
       "enunciado": "el ejercicio en {id['en']} con ___ donde va la respuesta",
       "respuesta": "la respuesta correcta",
-      "explicacion": "por qué es correcta, en español",
-      "pista": "una pista breve en español"
+      "explicacion": "por quÃ© es correcta, en espaÃ±ol",
+      "pista": "una pista breve en espaÃ±ol"
     }}
   ]
 }}"""
@@ -453,14 +454,14 @@ def frases(datos: MensajeFrases):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""Generá 7 frases célebres o proverbios en {id['en']} con su traducción al español argentino.
+            "content": f"""GenerÃ¡ 7 frases cÃ©lebres o proverbios en {id['en']} con su traducciÃ³n al espaÃ±ol argentino.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "frases": [
     {{
       "idioma": "la frase en {id['en']}",
-      "español": "traducción al español argentino"
+      "espaÃ±ol": "traducciÃ³n al espaÃ±ol argentino"
     }}
   ]
 }}"""
@@ -482,19 +483,19 @@ def preguntas_diagnostico(datos: MensajePreguntasDiagnostico):
         max_tokens=2048,
         messages=[{
             "role": "user",
-            "content": f"""Generá 10 preguntas de opción múltiple para evaluar el nivel MCER de {id['en']} de un estudiante hispanohablante argentino.
+            "content": f"""GenerÃ¡ 10 preguntas de opciÃ³n mÃºltiple para evaluar el nivel MCER de {id['en']} de un estudiante hispanohablante argentino.
 
 2 preguntas nivel A1, 2 nivel A2, 2 nivel B1, 2 nivel B2, 2 nivel C1.
 
-Respondé ÚNICAMENTE con este JSON:
+RespondÃ© ÃšNICAMENTE con este JSON:
 {{
   "preguntas": [
     {{
       "id": 1,
       "nivel": "A1",
-      "pregunta": "la pregunta en español sobre {id['en']}",
-      "opciones": ["opción A", "opción B", "opción C", "opción D"],
-      "correcta": "opción A"
+      "pregunta": "la pregunta en espaÃ±ol sobre {id['en']}",
+      "opciones": ["opciÃ³n A", "opciÃ³n B", "opciÃ³n C", "opciÃ³n D"],
+      "correcta": "opciÃ³n A"
     }}
   ]
 }}"""
