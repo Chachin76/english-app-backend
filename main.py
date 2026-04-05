@@ -1,4 +1,5 @@
-﻿from fastapi import FastAPI
+﻿si
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from anthropic import Anthropic
@@ -499,6 +500,51 @@ RespondÃ© ÃšNICAMENTE con este JSON:
     }}
   ]
 }}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+class MensajeLeccion(BaseModel):
+    idioma: str = "ingles"
+    nivel: str = "A1"
+    leccion_numero: int = 1
+
+@app.post("/leccion")
+def generar_leccion(datos: MensajeLeccion):
+    import json
+    id = get_idioma(datos.idioma)
+    TEMAS_A1 = ["Saludos y presentaciones","Numeros del 1 al 20","Colores basicos","Dias de la semana","Meses del anio","La familia","Partes del cuerpo","Comidas y bebidas basicas","Objetos del hogar","Ropa basica","Animales comunes","Medios de transporte","El clima y las estaciones","Profesiones basicas","Lugares de la ciudad"]
+    TEMAS_A2 = ["Rutinas diarias","Compras en el mercado","Pedir comida en un restaurante","Hablar del pasado","Planes futuros","Describir personas","Describir lugares","Dar direcciones","Hablar del tiempo libre","La salud y el cuerpo","Viajes y vacaciones","El trabajo y los estudios","Las emociones","La casa y los muebles","Hacer comparaciones"]
+    TEMAS_B1 = ["Expresar opiniones","Hablar de experiencias pasadas","Hacer hipotesis","Describir procesos","Hablar de habitos pasados","Expresar acuerdo y desacuerdo","Dar consejos","Hablar de planes y predicciones","Contar historias","Expresar causa y efecto","Hablar de cultura y tradiciones","Medios de comunicacion","El medio ambiente","Tecnologia en la vida diaria","Relaciones personales"]
+    TEMAS = {"A1": TEMAS_A1, "A2": TEMAS_A2, "B1": TEMAS_B1}
+    temas_nivel = TEMAS.get(datos.nivel, TEMAS_A1)
+    tema = temas_nivel[min(datos.leccion_numero - 1, len(temas_nivel) - 1)]
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera una leccion completa sobre "{tema}" para nivel {datos.nivel}.
+Responde UNICAMENTE con este JSON:
+{{
+  "tema": "{tema}",
+  "nivel": "{datos.nivel}",
+  "leccion": {datos.leccion_numero},
+  "explicacion": "explicacion clara del tema en espanol, 3-4 parrafos",
+  "vocabulario": [
+    {{"palabra": "palabra en {id['en']}", "traduccion": "traduccion al espanol", "ejemplo": "ejemplo en {id['en']}", "ejemplo_traduccion": "traduccion del ejemplo"}}
+  ],
+  "ejercicios": [
+    {{"tipo": "elegir", "consigna": "consigna en espanol", "pregunta": "la pregunta", "opciones": ["A", "B", "C", "D"], "respuesta": "correcta", "explicacion": "por que es correcta"}}
+  ],
+  "frase_del_dia": "frase motivadora en {id['en']}",
+  "frase_traduccion": "traduccion de la frase"
+}}
+El vocabulario debe tener exactamente 5 palabras.
+Los ejercicios deben ser exactamente 3."""
         }]
     )
     texto = respuesta.content[0].text.strip()
