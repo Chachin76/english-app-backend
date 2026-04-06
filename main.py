@@ -515,9 +515,24 @@ class MensajeLeccion(BaseModel):
 def generar_leccion(datos: MensajeLeccion):
     import json
     id = get_idioma(datos.idioma)
-    TEMAS_A1 = ["Saludos y presentaciones","Numeros del 1 al 20","Colores basicos","Dias de la semana","Meses del anio","La familia","Partes del cuerpo","Comidas y bebidas basicas","Objetos del hogar","Ropa basica","Animales comunes","Medios de transporte","El clima y las estaciones","Profesiones basicas","Lugares de la ciudad"]
-    TEMAS_A2 = ["Rutinas diarias","Compras en el mercado","Pedir comida en un restaurante","Hablar del pasado","Planes futuros","Describir personas","Describir lugares","Dar direcciones","Hablar del tiempo libre","La salud y el cuerpo","Viajes y vacaciones","El trabajo y los estudios","Las emociones","La casa y los muebles","Hacer comparaciones"]
-    TEMAS_B1 = ["Expresar opiniones","Hablar de experiencias pasadas","Hacer hipotesis","Describir procesos","Hablar de habitos pasados","Expresar acuerdo y desacuerdo","Dar consejos","Hablar de planes y predicciones","Contar historias","Expresar causa y efecto","Hablar de cultura y tradiciones","Medios de comunicacion","El medio ambiente","Tecnologia en la vida diaria","Relaciones personales"]
+    TEMAS_A1 = ["Saludos y presentaciones","Numeros del 1 al 20","Colores basicos","Dias de la semana","Meses del anio","La familia","Partes del cuerpo","Comidas y bebidas","Objetos del hogar","Ropa basica","Animales comunes","Medios de transporte","El clima","Profesiones basicas","Lugares de la ciudad","Los numeros 20 al 100","Preguntas basicas","Verbos de accion basicos","Adjetivos basicos","Mi rutina diaria"]
+    TEMAS_A2 = ["Rutinas diarias","Compras en el mercado","Pedir comida","Hablar del pasado","Planes futuros","Describir personas","Describir lugares","Dar direcciones","Tiempo libre","La salud","Viajes y vacaciones","El trabajo","Las emociones","La casa","Hacer comparaciones","El dinero","La tecnologia basica","Deportes","La naturaleza","Las fiestas y celebraciones"]
+    TEMAS_B1 = ["Expresar opiniones","Experiencias pasadas","Hacer hipotesis","Describir procesos","Habitos pasados","Acuerdo y desacuerdo","Dar consejos","Planes y predicciones","Contar historias","Causa y efecto","Cultura y tradiciones","Medios de comunicacion","El medio ambiente","Tecnologia","Relaciones personales","Politica basica","Arte y musica","Ciencia basica","Educacion","El mundo laboral"]
+
+    TEMAS_CHINO_A1 = ["Introduccion a los caracteres chinos Hanzi","El sistema Pinyin romanizacion","Los trazos basicos del chino","Radicales mas comunes","Numeros en chino y caracteres","Saludos y caracteres basicos","Colores en chino con caracteres","La familia en chino con caracteres","Comidas tipicas chinas con caracteres","Lugares en chino con caracteres","Verbos basicos en chino con caracteres","Adjetivos basicos en chino","Los tonos del chino mandarin","Frases de supervivencia en chino","Escritura de mi nombre en chino","Numeros del 1 al 100 en chino","Preguntas basicas en chino","El tiempo en chino","Transporte en chino","Mi rutina en chino"]
+    TEMAS_JAPONES_A1 = ["Introduccion al Hiragana parte 1 vocales","Introduccion al Hiragana parte 2 consonantes","Introduccion al Katakana parte 1","Introduccion al Katakana parte 2","Kanji basicos mas usados","Saludos en japones con escritura","Numeros en japones con escritura","La familia en japones con escritura","Colores en japones con escritura","Comidas japonesas con escritura","Verbos basicos en japones","Particulas basicas wa ga wo","Frases de supervivencia en japones","Escritura de mi nombre en Katakana","Los contadores en japones","Preguntas basicas en japones","El tiempo en japones","Transporte en japones","Mi rutina en japones","Cultura japonesa basica"]
+    TEMAS_COREANO_A1 = ["Introduccion al Hangul vocales basicas","Introduccion al Hangul consonantes basicas","Combinaciones de Hangul silabas","Escritura del Hangul practica","Saludos en coreano con Hangul","Numeros en coreano con Hangul","La familia en coreano con Hangul","Colores en coreano con Hangul","Comidas coreanas con Hangul","Verbos basicos en coreano","Adjetivos basicos en coreano","Frases de supervivencia en coreano","Escritura de mi nombre en Hangul","Particulas basicas del coreano","Preguntas basicas en coreano","El tiempo en coreano","Transporte en coreano","Mi rutina en coreano","Cultura coreana basica","K-pop y cultura popular coreana"]
+
+    if datos.idioma == "chino":
+        temas_nivel = TEMAS_CHINO_A1 if datos.nivel == "A1" else TEMAS_A1
+    elif datos.idioma == "japones":
+        temas_nivel = TEMAS_JAPONES_A1 if datos.nivel == "A1" else TEMAS_A1
+    elif datos.idioma == "coreano":
+        temas_nivel = TEMAS_COREANO_A1 if datos.nivel == "A1" else TEMAS_A1
+    else:
+        TEMAS = {"A1": TEMAS_A1, "A2": TEMAS_A2, "B1": TEMAS_B1}
+        temas_nivel = TEMAS.get(datos.nivel, TEMAS_A1)
+    tema = temas_nivel[min(datos.leccion_numero - 1, len(temas_nivel) - 1)]
     TEMAS = {"A1": TEMAS_A1, "A2": TEMAS_A2, "B1": TEMAS_B1}
     temas_nivel = TEMAS.get(datos.nivel, TEMAS_A1)
     tema = temas_nivel[min(datos.leccion_numero - 1, len(temas_nivel) - 1)]
