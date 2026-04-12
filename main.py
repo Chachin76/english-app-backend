@@ -566,3 +566,219 @@ Los ejercicios deben ser exactamente 3."""
     if texto.startswith("```"):
         texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
     return json.loads(texto)
+class MensajeLeccionModulo(BaseModel):
+    idioma: str = "ingles"
+    nivel: str = "A1"
+    tema: str = ""
+    modulo: str = "corrector"
+
+@app.post("/leccion/corrector")
+def leccion_corrector(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera 3 oraciones de ejemplo para que el estudiante practique el corrector de escritura.
+El tema es "{datos.tema}" y el nivel es {datos.nivel}.
+Las oraciones deben ser apropiadas para el nivel {datos.nivel}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "consigna": "instruccion breve en espanol",
+  "oraciones": [
+    {{
+      "oracion": "oracion en {id['en']}",
+      "traduccion": "traduccion al espanol"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/vocabulario")
+def leccion_vocabulario(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera 8 palabras de vocabulario sobre "{datos.tema}" para nivel {datos.nivel}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "palabras": [
+    {{
+      "palabra": "palabra en {id['en']}",
+      "traduccion": "traduccion al espanol",
+      "ejemplo": "oracion de ejemplo en {id['en']}",
+      "ejemplo_traduccion": "traduccion del ejemplo"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/frases")
+def leccion_frases(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera 6 frases utiles sobre "{datos.tema}" para nivel {datos.nivel}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "frases": [
+    {{
+      "frase": "frase en {id['en']}",
+      "traduccion": "traduccion al espanol",
+      "uso": "cuando se usa esta frase, en espanol"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/situacion")
+def leccion_situacion(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera una situacion de practica sobre "{datos.tema}" para nivel {datos.nivel}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "situacion": "descripcion de la situacion en espanol",
+  "rol_tutor": "rol que juega el tutor en {id['en']}",
+  "frases_utiles": [
+    {{
+      "frase": "frase util en {id['en']}",
+      "traduccion": "traduccion al espanol"
+    }}
+  ],
+  "inicio": "mensaje inicial del tutor en {id['en']}"
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/dictado")
+def leccion_dictado(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera 5 frases para dictado sobre "{datos.tema}" para nivel {datos.nivel}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "frases": [
+    {{
+      "texto": "frase en {id['en']}",
+      "traduccion": "traduccion al espanol"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/lectura")
+def leccion_lectura(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
+Genera un texto corto de lectura sobre "{datos.tema}" para nivel {datos.nivel}.
+Longitud: A1=80 palabras, A2=120 palabras, B1=180 palabras, B2=250 palabras.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "titulo": "titulo del texto en {id['en']}",
+  "texto": "el texto en {id['en']}",
+  "preguntas": [
+    {{
+      "pregunta": "pregunta de comprension en espanol",
+      "opciones": ["A", "B", "C", "D"],
+      "correcta": "la opcion correcta"
+    }}
+  ]
+}}
+Genera exactamente 3 preguntas."""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
+
+@app.post("/leccion/cultura")
+def leccion_cultura(datos: MensajeLeccionModulo):
+    import json
+    id = get_idioma(datos.idioma)
+    respuesta = cliente.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Sos un profesor de {id['nombre']} y cultura para hispanohablantes argentinos.
+Genera 4 datos culturales interesantes relacionados con "{datos.tema}" del mundo de habla {id['en']}.
+
+Responde UNICAMENTE con este JSON:
+{{
+  "datos": [
+    {{
+      "titulo": "titulo del dato cultural",
+      "descripcion": "descripcion en espanol",
+      "curiosidad": "curiosidad interesante en espanol"
+    }}
+  ]
+}}"""
+        }]
+    )
+    texto = respuesta.content[0].text.strip()
+    if texto.startswith("```"):
+        texto = texto.split("\n", 1)[1].rsplit("```", 1)[0]
+    return json.loads(texto)
