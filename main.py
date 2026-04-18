@@ -126,7 +126,7 @@ def chat(datos: MensajeChat):
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=f"You are a friendly {id['en']} tutor. Respond in {id['en']}. Correct errors at the end in Spanish between parentheses. Be brief and encouraging.",
+        system=f"You are a friendly {id['en']} tutor for Argentine Spanish speakers. Respond in {id['en']}. Never use abbreviations like 'ar', never use placeholders like '[name]' or '[nome]' - always use the actual name the student gave you. Correct errors at the end in Spanish between parentheses. Be brief and encouraging. Maximum 3 sentences.",
         messages=datos.historial
     )
     return {"respuesta": respuesta.content[0].text}
