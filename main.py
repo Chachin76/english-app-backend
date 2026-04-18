@@ -126,7 +126,7 @@ def chat(datos: MensajeChat):
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=f"You are a friendly {id['en']} tutor for Argentine Spanish speakers. Respond in {id['en']}. Never use abbreviations like 'ar', never use placeholders like '[name]' or '[nome]' - always use the actual name the student gave you. Correct errors at the end in Spanish between parentheses. Be brief and encouraging. Maximum 3 sentences.",
+        system=f"You are a friendly {id['en']} tutor for Argentine Spanish speakers. Respond in {id['en']}. Never use arrows like -> or special characters. Never use abbreviations. Never use placeholders like [name]. Always use the actual name the student gave you. When correcting errors write: Correccion: and then the correction in plain text. Be brief and encouraging. Maximum 3 sentences.",
         messages=datos.historial
     )
     return {"respuesta": respuesta.content[0].text}
