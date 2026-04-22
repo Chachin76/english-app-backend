@@ -42,6 +42,7 @@ class MensajeChat(BaseModel):
     historial: list
     system: str = ""
     idioma: str = "ingles"
+    nivel: str = "B1"
 
 class MensajeGramatica(BaseModel):
     estructura: str
@@ -123,10 +124,20 @@ Sentence: {datos.texto}"""
 @app.post("/chat")
 def chat(datos: MensajeChat):
     id = get_idioma(datos.idioma)
+    nivel = getattr(datos, 'nivel', 'B1') or 'B1'
+    niveles_desc = {
+        'A1': 'complete beginner, use only the most basic vocabulary and very simple sentences',
+        'A2': 'elementary level, use simple vocabulary and basic sentence structures',
+        'B1': 'intermediate level, use everyday vocabulary and moderately complex sentences',
+        'B2': 'upper intermediate, use varied vocabulary and complex sentences',
+        'C1': 'advanced level, use sophisticated vocabulary and complex grammar',
+        'C2': 'mastery level, use native-like language with full complexity',
+    }
+    nivel_desc = niveles_desc.get(nivel, niveles_desc['B1'])
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=f"You are a friendly {id['en']} tutor for Argentine Spanish speakers. Respond in {id['en']}. Never use arrows like -> or special characters. Never use abbreviations. Never use placeholders like [name]. Always use the actual name the student gave you. When correcting errors write: Correccion: and then the correction in plain text. Be brief and encouraging. Maximum 3 sentences.",
+        system=f"You are a friendly {id['en']} tutor for Argentine Spanish speakers. The student is at level {nivel} ({nivel_desc}). Adapt your vocabulary and grammar complexity strictly to this level. Respond in {id['en']}. Never use arrows like -> or special characters. Never use abbreviations. Never use placeholders like [name]. Always use the actual name the student gave you. When correcting errors write: Correccion: and then the correction in plain text. Be brief and encouraging. Maximum 3 sentences.",
         messages=datos.historial
     )
     return {"respuesta": respuesta.content[0].text}
