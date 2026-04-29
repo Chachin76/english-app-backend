@@ -570,7 +570,7 @@ Responde UNICAMENTE con este JSON:
   "frase_traduccion": "traduccion de la frase"
 }}
 El vocabulario debe tener exactamente 5 palabras.
-Los ejercicios deben ser exactamente 3."""
+Los ejercicios deben ser exactamente 10."""
         }]
     )
     texto = respuesta.content[0].text.strip()
