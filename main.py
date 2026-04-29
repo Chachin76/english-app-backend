@@ -549,7 +549,7 @@ def generar_leccion(datos: MensajeLeccion):
     tema = temas_nivel[min(datos.leccion_numero - 1, len(temas_nivel) - 1)]
     respuesta = cliente.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=2048,
+        max_tokens=4096,
         messages=[{
             "role": "user",
             "content": f"""Sos un profesor de {id['nombre']} para hispanohablantes argentinos.
